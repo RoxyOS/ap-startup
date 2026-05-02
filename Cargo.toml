@@ -1,0 +1,14 @@
+[package]
+name = "ap-startup"
+version = "0.1.0"
+edition = "2024"
+description = "Wake up x86 application processors."
+repository = "https://github.com/RoxyOS/ap-startup"
+license = "MIT"
+readme = "README.md"
+keywords = ["apic", "ap", "smp", "x86", "startup"]
+categories = ["no-std", "hardware-support"]
+
+[dependencies]
+acpi = "6.1"
+x2apic = "0.5"
