@@ -14,11 +14,9 @@ The crate needs two platform-specific operations:
 - a way to turn a physical address into a writable pointer
 
 ```rust,ignore
-use ap_startup::Platform;
+struct MyPlatform;
 
-struct KernelPlatform;
-
-impl Platform for KernelPlatform {
+impl Platform for MyPlatform {
     const STACK_SIZE: usize = 0x400000;
 
     fn sleep_us(us: u64) {
@@ -55,40 +53,22 @@ You need:
 - the top-level page table physical address
 
 ```rust,ignore
-use acpi::AcpiTables;
-use x2apic::lapic::LocalApic;
+let acpi_tables = ; // Your parsed ACPI Tables.
+let local_apic = ; // The BSP Local APIC.
+let l4_table = ; // The physical address of the L4 Page table.
 
-fn make_context<'a, H: acpi::Handler>(
-    acpi_tables: &'a AcpiTables<H>,
-    local_apic: &'a mut LocalApic,
-    l4_table: u64,
-) -> ap_startup::Context<'a, H> {
-    ap_startup::Context {
-        acpi_tables,
-        current_local_apic: local_apic,
-        l4_table,
-    }
-}
+let ctx = Context {
+    acpi_tables,
+    current_local_apic: local_apic,
+    l4_table,
+};
 ```
 
-### 4. Start all APs
+### Start all APs
 
 ```rust,ignore
-use ap_startup::start_all_aps;
-
-fn start_aps<H: acpi::Handler>(
-    acpi_tables: &AcpiTables<H>,
-    local_apic: &mut LocalApic,
-    l4_table: u64,
-) {
-    let ctx = ap_startup::Context {
-        acpi_tables,
-        current_local_apic: local_apic,
-        l4_table,
-    };
-
-    start_all_aps::<KernelPlatform, H>(ap_main, ctx)
-        .expect("failed to wake APs");
+start_all_aps::<MyPlatform, MyACPIHandler>(ap_main, ctx)
+    .expect("failed to wake APs");
 }
 ```
 
@@ -113,25 +93,3 @@ The current trampoline only loads the low 32 bits of `CR3` during the 32-bit
 startup stage.
 
 That means the top-level page table physical address must be below `4 GiB`.
-
-### Per-AP stack allocation
-
-Right before each AP is started, the crate allocates and leaks a fresh stack of
-size `Platform::STACK_SIZE` and publishes its top into the shared trampoline
-workspace.
-
-This is simple and works for early bring-up, but it means:
-
-- each AP gets a leaked startup stack
-- stack ownership is currently managed by the crate
-- the startup stack is distinct from any later per-CPU runtime stack you may want
-
-## What This Crate Does Not Do
-
-- build or install an AP trampoline binary outside its fixed workspace
-- switch APs into their final runtime stack
-- wait for AP online handshakes
-- initialize per-CPU state
-- initialize LAPIC, scheduler, or any higher-level AP runtime state
-
-The caller is still responsible for all of the above.
