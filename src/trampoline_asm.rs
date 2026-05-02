@@ -1,12 +1,11 @@
-#![allow(bad_asm_style)]
-
 use core::arch::global_asm;
 
-use crate::trampoline::{GDT_DESC_ADDR, TRAMPOLINE_DATA_ADDR, TRAMPOLINE_STACK_ADDR};
+use crate::trampoline::{GDT_DESC_ADDR, TRAMPOLINE_ADDR, TRAMPOLINE_DATA_ADDR, TRAMPOLINE_STACK_ADDR};
 
 global_asm!(
     r#"
     .section .text.ap_trampoline, "ax"
+    .set TRAMPOLINE_BASE, {trampoline_base}
     .code16
     .global ap_trampoline_start
 ap_trampoline_start:
@@ -26,9 +25,10 @@ ap_trampoline_start:
     or eax, 1
     mov cr0, eax
 
-    .att_syntax
-    ljmp $0x08, $ap_trampoline_32
-    .intel_syntax noprefix
+    .set ap_trampoline_32_addr, TRAMPOLINE_BASE + (ap_trampoline_32 - ap_trampoline_start)
+    push 0x08
+    push ap_trampoline_32_addr
+    retf
 
     .code32
 ap_trampoline_32:
@@ -56,9 +56,10 @@ ap_trampoline_32:
     or eax, 1 << 31
     mov cr0, eax
 
-    .att_syntax
-    ljmp $0x18, $ap_trampoline_64
-    .intel_syntax noprefix
+    .set ap_trampoline_64_addr, TRAMPOLINE_BASE + (ap_trampoline_64 - ap_trampoline_start)
+    push 0x18
+    push ap_trampoline_64_addr
+    retf
 
     .code64
 ap_trampoline_64:
@@ -75,8 +76,9 @@ ap_trampoline_64:
 
     .global ap_trampoline_end
 ap_trampoline_end:
-"#,
+    "#,
     gdt_desc = const GDT_DESC_ADDR,
+    trampoline_base = const TRAMPOLINE_ADDR,
     trampoline_data = const TRAMPOLINE_DATA_ADDR,
     trampoline_stack = const TRAMPOLINE_STACK_ADDR,
 );
