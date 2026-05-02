@@ -1,7 +1,4 @@
-use acpi::{
-    AcpiTables, Handler,
-    sdt::madt::{Madt, MadtEntry},
-};
+use acpi::{Handler, sdt::madt::{Madt, MadtEntry}};
 use x2apic::lapic::LocalApic;
 
 use crate::{

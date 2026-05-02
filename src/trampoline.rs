@@ -1,7 +1,4 @@
-use core::{
-    arch::global_asm,
-    ptr::{addr_of, copy_nonoverlapping},
-};
+use core::ptr::{addr_of, copy_nonoverlapping};
 
 use acpi::Handler;
 
@@ -59,10 +56,10 @@ pub fn setup_trampoline<P: Platform, H: Handler>(
     Ok(())
 }
 
+// Allocate a fresh per-AP stack and publish its top into the shared trampoline
+// workspace right before waking the next AP.
 pub fn update_trampoline_stack<P: Platform>() {
-    const STACK_SIZE: usize = 0x400000;
-
-    let stack_top = allocate_stack(STACK_SIZE);
+    let stack_top = allocate_stack(P::STACK_SIZE);
     P::write_phys(TRAMPOLINE_STACK_ADDR, stack_top);
 }
 
