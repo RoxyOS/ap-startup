@@ -115,7 +115,6 @@ pub mod wakeup;
 pub struct Context<'a, H: Handler> {
     pub acpi_tables: &'a AcpiTables<H>,
     pub current_local_apic: &'a mut LocalApic,
-    pub current_l4_table: u64,
 }
 
 pub type EntryPoint = extern "C" fn() -> !;
@@ -124,6 +123,6 @@ pub fn start_all_aps<P: Platform, H: Handler>(
     entry_point: EntryPoint,
     ctx: Context<'_, H>,
 ) -> Result {
-    setup_trampoline::<P, H>(entry_point, &ctx)?;
+    setup_trampoline::<P, H>(entry_point)?;
     wakeup_all_aps_with::<P, H, _>(TRAMPOLINE_ADDR, ctx, || update_trampoline_stack::<P>())
 }

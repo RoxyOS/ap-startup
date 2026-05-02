@@ -22,6 +22,7 @@ version = "0.2.0"
 dependencies = [
  "acpi",
  "x2apic",
+ "x86_64",
 ]
 
 [[package]]

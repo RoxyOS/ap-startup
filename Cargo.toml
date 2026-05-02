@@ -12,3 +12,4 @@ categories = ["no-std", "hardware-support"]
 [dependencies]
 acpi = "6.1"
 x2apic = "0.5"
+x86_64 = "0.15"

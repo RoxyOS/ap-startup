@@ -1,9 +1,10 @@
 use core::ptr::{addr_of, copy_nonoverlapping};
 
 use acpi::Handler;
+use x86_64::registers::control::Cr3;
 
 use crate::{
-    Context, EntryPoint,
+    EntryPoint,
     error::{Error, Result},
     misc::allocate_stack,
     platform::Platform,
@@ -33,12 +34,11 @@ unsafe extern "C" {
     static ap_trampoline_end: u8;
 }
 
-pub fn setup_trampoline<P: Platform, H: Handler>(
-    entry_point: EntryPoint,
-    ctx: &Context<'_, H>,
-) -> Result {
+pub fn setup_trampoline<P: Platform, H: Handler>(entry_point: EntryPoint) -> Result {
     let entry_point = entry_point as *const () as u64;
-    let current_l4_table = ctx.current_l4_table;
+
+    let (l4_table_frame, _) = Cr3::read();
+    let current_l4_table = l4_table_frame.start_address().as_u64();
 
     let trampoline_data = TrampolineData {
         current_l4_table,
