@@ -51,9 +51,9 @@
 //! - the top-level page table physical address
 //!
 //! ```rust,ignore
-//! let acpi_tables = ; // Your parsed ACPI Tables.
-//! let local_apic = ; // The BSP Local APIC.
-//! let l4_table = ; // The physical address of the L4 Page table.
+//! let acpi_tables = todo!(); // your parsed ACPI tables
+//! let local_apic = todo!(); // the BSP local APIC
+//! let l4_table = todo!(); // the physical address of the L4 page table
 //!
 //! let ctx = Context {
 //!     acpi_tables,
@@ -67,7 +67,6 @@
 //! ```rust,ignore
 //! start_all_aps::<MyPlatform, MyACPIHandler>(ap_main, ctx)
 //!     .expect("failed to wake APs");
-//! }
 //! ```
 //!
 //! ## Limitations
