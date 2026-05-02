@@ -24,7 +24,9 @@ ap_trampoline_start:
     or eax, 1
     mov cr0, eax
 
-    ljmp $0x08, $ap_trampoline_32
+    push 0x08
+    push offset ap_trampoline_32
+    retf
 
     .code32
 ap_trampoline_32:
@@ -52,7 +54,9 @@ ap_trampoline_32:
     or eax, 1 << 31
     mov cr0, eax
 
-    ljmp $0x18, $ap_trampoline_64
+    push 0x18
+    push offset ap_trampoline_64
+    retf
 
     .code64
 ap_trampoline_64:
