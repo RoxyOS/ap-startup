@@ -45,7 +45,7 @@ pub fn setup_trampoline<P: Platform, H: Handler>(
         entry_point,
     };
 
-    if l4_table >= 0x10_000_000 {
+    if l4_table >= 0x1_0000_0000 {
         return Err(Error::L4TableAddrTooHigh);
     }
 
