@@ -17,7 +17,7 @@ pub const TRAMPOLINE_STACK_ADDR: u64 = 0x8900;
 
 #[repr(C)]
 struct TrampolineData {
-    pub l4_table: u64,
+    pub current_l4_table: u64,
     pub entry_point: u64,
 }
 
@@ -38,14 +38,14 @@ pub fn setup_trampoline<P: Platform, H: Handler>(
     ctx: &Context<'_, H>,
 ) -> Result {
     let entry_point = entry_point as *const () as u64;
-    let l4_table = ctx.l4_table;
+    let current_l4_table = ctx.current_l4_table;
 
     let trampoline_data = TrampolineData {
-        l4_table,
+        current_l4_table,
         entry_point,
     };
 
-    if l4_table >= 0x1_0000_0000 {
+    if current_l4_table >= 0x1_0000_0000 {
         return Err(Error::L4TableAddrTooHigh);
     }
 

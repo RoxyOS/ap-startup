@@ -53,12 +53,14 @@
 //! ```rust,ignore
 //! let acpi_tables = todo!(); // your parsed ACPI tables
 //! let local_apic = todo!(); // the BSP local APIC
-//! let l4_table = todo!(); // the physical address of the L4 page table
+//! let current_l4_table = todo!(); // the physical address of the current L4 page table
+//!                                // this page table must map the trampoline workspace
+//!                                // and the `ap_main` entry point after paging is enabled
 //!
 //! let ctx = Context {
 //!     acpi_tables,
 //!     current_local_apic: local_apic,
-//!     l4_table,
+//!     current_l4_table,
 //! };
 //! ```
 //!
@@ -113,7 +115,7 @@ pub mod wakeup;
 pub struct Context<'a, H: Handler> {
     pub acpi_tables: &'a AcpiTables<H>,
     pub current_local_apic: &'a mut LocalApic,
-    pub l4_table: u64,
+    pub current_l4_table: u64,
 }
 
 pub type EntryPoint = extern "C" fn() -> !;
