@@ -1,6 +1,6 @@
 [package]
 name = "ap-startup"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 description = "Start x86 application processors and jump to an entry point."
 repository = "https://github.com/RoxyOS/ap-startup"
