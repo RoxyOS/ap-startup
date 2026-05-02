@@ -1,3 +1,5 @@
+#![allow(bad_asm_style)]
+
 use core::arch::global_asm;
 
 use crate::trampoline::{GDT_DESC_ADDR, TRAMPOLINE_DATA_ADDR, TRAMPOLINE_STACK_ADDR};
@@ -24,9 +26,9 @@ ap_trampoline_start:
     or eax, 1
     mov cr0, eax
 
-    push 0x08
-    push offset ap_trampoline_32
-    retf
+    .att_syntax
+    ljmp $0x08, $ap_trampoline_32
+    .intel_syntax noprefix
 
     .code32
 ap_trampoline_32:
@@ -54,9 +56,9 @@ ap_trampoline_32:
     or eax, 1 << 31
     mov cr0, eax
 
-    push 0x18
-    push offset ap_trampoline_64
-    retf
+    .att_syntax
+    ljmp $0x18, $ap_trampoline_64
+    .intel_syntax noprefix
 
     .code64
 ap_trampoline_64:
