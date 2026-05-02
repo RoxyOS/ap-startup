@@ -24,7 +24,9 @@ ap_trampoline_start:
     or eax, 1
     mov cr0, eax
 
-    jmp 0x08:ap_trampoline_32
+    .att_syntax
+    ljmp $0x08, $ap_trampoline_32
+    .intel_syntax noprefix
 
     .code32
 ap_trampoline_32:
@@ -52,7 +54,9 @@ ap_trampoline_32:
     or eax, 1 << 31
     mov cr0, eax
 
-    jmp 0x18:ap_trampoline_64
+    .att_syntax
+    ljmp $0x18, $ap_trampoline_64
+    .intel_syntax noprefix
 
     .code64
 ap_trampoline_64:
