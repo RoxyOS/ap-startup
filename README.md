@@ -1,34 +1,19 @@
 # ap-startup
 
-Wake up x86 application processors.
+Start x86 application processors and jump to an entry point.
 
 This crate is intended for `no_std` kernels bringing up SMP.
-
-## Notes
-
-`ap-startup` does not provide the AP trampoline itself.
-It only wakes all APs and jumps to the provided entry point.
-
-`ap-startup` does not:
-    
-- build or install an AP trampoline
-- switch APs into protected mode or long mode
-- allocate AP stacks
-- wait for AP online handshakes
-- initialize per-CPU state
-
-The caller is responsible for all of the above.
 
 ## Usage
 
 ```rust,ignore
 use acpi::AcpiTables;
-use ap_startup::{Delay, wakeup_all_aps};
+use ap_startup::{Platform, startup_ap};
 use x2apic::lapic::LocalApic;
 
-struct PlatformDelay;
+struct KernelPlatform;
 
-impl Delay for PlatformDelay {
+impl Platform for KernelPlatform {
     fn sleep_us(us: u64) {
         // TODO: implement a proper delay backend.
         let _ = us;
@@ -41,13 +26,27 @@ impl Delay for PlatformDelay {
             i += 1;
         }
     }
+
+    fn phys_to_ptr<T>(phys_addr: u64) -> *mut T {
+        let _ = phys_addr;
+        todo!()
+    }
 }
 
-fn wake_aps() {
+extern "C" fn ap_main() -> ! {
+    loop {}
+}
+
+fn start_aps() {
     let acpi_tables = ; // Your ACPI tables instance.
     let local_apic = ; // The BSP local APIC.
-    let entry_point = ; // The AP startup entry point.
-    wakeup_all_aps::<YourACPIHandler, PlatformDelay>(acpi_tables, local_apic, entry_point)
+    let l4_table = ; // The top-level page table physical address.
+    let ctx = ap_startup::Context {
+        acpi_tables,
+        current_local_apic: local_apic,
+        l4_table,
+    };
+    start_all_aps::<KernelPlatform, YourACPIHandler>(ap_main, ctx)
         .expect("failed to wake APs");
 }
 ```

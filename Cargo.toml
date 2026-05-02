@@ -1,12 +1,12 @@
 [package]
 name = "ap-startup"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
-description = "Wake up x86 application processors."
+description = "Start x86 application processors and jump to an entry point."
 repository = "https://github.com/RoxyOS/ap-startup"
 license = "MIT"
 readme = "README.md"
-keywords = ["apic", "ap", "smp", "x86", "startup"]
+keywords = ["trampoline", "ap", "smp", "x86", "startup"]
 categories = ["no-std", "hardware-support"]
 
 [dependencies]

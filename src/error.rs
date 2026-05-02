@@ -1,8 +1,9 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error {
     NoMadt,
-    AddrTooHigh,
-    AddrNotAligned,
+    TrampolineTooHigh,
+    TrampolineNotAligned,
+    L4TableAddrTooHigh,
 }
 
 pub type Result<T = ()> = core::result::Result<T, Error>;
