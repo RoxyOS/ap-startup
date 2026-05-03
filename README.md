@@ -81,17 +81,6 @@ start_all_aps::<MyPlatform, MyACPIHandler>(ap_main, ctx)
     .expect("failed to wake APs");
 ```
 
-## Limitations
+## Example Usage
 
-### Shared trampoline workspace
-
-The crate uses one fixed low-memory trampoline workspace:
-
-- `0x8000` for the trampoline code
-- `0x8800` for the temporary GDT
-- `0x8840` for the GDT descriptor
-- `0x8880` for trampoline startup data
-- `0x8900` for the current AP stack top
-
-Because this workspace is shared, AP startup is assumed to be serialized.
-This crate is not designed for parallel AP bring-up.
+If your still confused on how to use it, check out [roxy](https://github.com/RoxyOS/roxy/blob/master/kernel/src/smp/startup.rs)
