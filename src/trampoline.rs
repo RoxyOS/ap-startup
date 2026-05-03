@@ -1,6 +1,5 @@
 use core::ptr::{addr_of, copy_nonoverlapping};
 
-use acpi::Handler;
 use x86_64::registers::control::Cr3;
 
 use crate::{
@@ -35,7 +34,19 @@ unsafe extern "C" {
     static ap_trampoline_end: u8;
 }
 
-pub(crate) fn setup_trampoline<P: Platform, H: Handler>(entry_point: EntryPoint) -> Result {
+const _: () = {
+    assert!(GDT_ADDR >= TRAMPOLINE_ADDR);
+    assert!(GDT_DESC_ADDR >= TRAMPOLINE_ADDR);
+    assert!(TRAMPOLINE_DATA_ADDR >= TRAMPOLINE_ADDR);
+    assert!(TRAMPOLINE_STACK_ADDR >= TRAMPOLINE_ADDR);
+
+    assert!(GDT_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+    assert!(GDT_DESC_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+    assert!(TRAMPOLINE_DATA_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+    assert!(TRAMPOLINE_STACK_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+};
+
+pub(crate) fn setup_trampoline<P: Platform>(entry_point: EntryPoint) -> Result {
     let entry_point = entry_point as *const () as u64;
 
     let (l4_table_frame, _) = Cr3::read();
@@ -103,27 +114,13 @@ fn setup_trampoline_gdt<P: Platform>() {
 #[cfg(test)]
 mod tests {
     use super::{
-        GDT_ADDR, GDT_DESC_ADDR, TRAMPOLINE_ADDR, TRAMPOLINE_DATA_ADDR, TRAMPOLINE_PAGE_SIZE,
-        TRAMPOLINE_STACK_ADDR,
+        TRAMPOLINE_ADDR, TRAMPOLINE_PAGE_SIZE, TRAMPOLINE_STACK_ADDR,
     };
 
     #[test]
     fn trampoline_workspace_fits_in_one_page() {
         let workspace_end = TRAMPOLINE_STACK_ADDR + size_of::<u64>() as u64;
         assert!(workspace_end <= TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
-    }
-
-    #[test]
-    fn trampoline_gdt_descriptor_lives_inside_workspace_page() {
-        assert!(GDT_ADDR >= TRAMPOLINE_ADDR);
-        assert!(GDT_DESC_ADDR >= TRAMPOLINE_ADDR);
-        assert!(TRAMPOLINE_DATA_ADDR >= TRAMPOLINE_ADDR);
-        assert!(TRAMPOLINE_STACK_ADDR >= TRAMPOLINE_ADDR);
-
-        assert!(GDT_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
-        assert!(GDT_DESC_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
-        assert!(TRAMPOLINE_DATA_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
-        assert!(TRAMPOLINE_STACK_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
     }
 
     #[test]

@@ -25,22 +25,23 @@ where
 
     for madt_entry in madt.get().entries() {
         match madt_entry {
-            MadtEntry::LocalApic(local_apic) => {
-                if is_cpu_enabled(local_apic.flags) && local_apic.apic_id as u32 != current_apic_id
-                {
-                    func();
-                    send_sequence::<P>(
-                        current_local_apic,
-                        local_apic.apic_id as u32,
-                        trampoline_addr,
-                    );
-                }
+            MadtEntry::LocalApic(local_apic)
+                if is_cpu_enabled(local_apic.flags)
+                    && local_apic.apic_id as u32 != current_apic_id =>
+            {
+                func();
+                send_sequence::<P>(
+                    current_local_apic,
+                    local_apic.apic_id as u32,
+                    trampoline_addr,
+                );
             }
-            MadtEntry::LocalX2Apic(local_x2apic) => {
-                if is_cpu_enabled(local_x2apic.flags) && local_x2apic.x2apic_id != current_apic_id {
-                    func();
-                    send_sequence::<P>(current_local_apic, local_x2apic.x2apic_id, trampoline_addr);
-                }
+            MadtEntry::LocalX2Apic(local_x2apic)
+                if is_cpu_enabled(local_x2apic.flags)
+                    && local_x2apic.x2apic_id != current_apic_id =>
+            {
+                func();
+                send_sequence::<P>(current_local_apic, local_x2apic.x2apic_id, trampoline_addr);
             }
             _ => (),
         }

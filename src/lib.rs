@@ -124,6 +124,6 @@ pub fn start_all_aps<P: Platform, H: Handler>(
     entry_point: EntryPoint,
     ctx: Context<'_, H>,
 ) -> Result {
-    setup_trampoline::<P, H>(entry_point)?;
+    setup_trampoline::<P>(entry_point)?;
     wakeup_all_aps_with::<P, H, _>(TRAMPOLINE_ADDR, ctx, || update_trampoline_stack::<P>())
 }
