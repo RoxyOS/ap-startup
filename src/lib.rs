@@ -100,15 +100,15 @@ use x2apic::lapic::LocalApic;
 use crate::{
     error::Result,
     platform::Platform,
-    trampoline::{TRAMPOLINE_ADDR, setup_trampoline, update_trampoline_stack},
+    trampoline::{TRAMPOLINE_ADDR, prepare_next_ap, setup_trampoline},
     wakeup::wakeup_all_aps_with,
 };
 
 extern crate alloc;
 
 pub mod error;
-pub mod platform;
 mod misc;
+pub mod platform;
 mod trampoline;
 mod trampoline_asm;
 mod wakeup;
@@ -125,5 +125,5 @@ pub fn start_all_aps<P: Platform, H: Handler>(
     ctx: Context<'_, H>,
 ) -> Result {
     setup_trampoline::<P>(entry_point)?;
-    wakeup_all_aps_with::<P, H, _>(TRAMPOLINE_ADDR, ctx, || update_trampoline_stack::<P>())
+    wakeup_all_aps_with::<P, H, _>(TRAMPOLINE_ADDR, ctx, || prepare_next_ap::<P>())
 }
