@@ -7,7 +7,7 @@ use crate::{
     platform::Platform,
 };
 
-pub fn wakeup_all_aps_with<P: Platform, H: Handler, F>(
+pub(crate) fn wakeup_all_aps_with<P: Platform, H: Handler, F>(
     trampoline_addr: u64,
     ctx: Context<'_, H>,
     mut func: F,

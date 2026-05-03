@@ -35,7 +35,7 @@ unsafe extern "C" {
     static ap_trampoline_end: u8;
 }
 
-pub fn setup_trampoline<P: Platform, H: Handler>(entry_point: EntryPoint) -> Result {
+pub(crate) fn setup_trampoline<P: Platform, H: Handler>(entry_point: EntryPoint) -> Result {
     let entry_point = entry_point as *const () as u64;
 
     let (l4_table_frame, _) = Cr3::read();
@@ -60,7 +60,7 @@ pub fn setup_trampoline<P: Platform, H: Handler>(entry_point: EntryPoint) -> Res
 
 // Allocate a fresh per-AP stack and publish its top into the shared trampoline
 // workspace right before waking the next AP.
-pub fn update_trampoline_stack<P: Platform>() {
+pub(crate) fn update_trampoline_stack<P: Platform>() {
     let stack_top = allocate_stack(P::STACK_SIZE);
     P::write_phys(TRAMPOLINE_STACK_ADDR, stack_top);
 }
