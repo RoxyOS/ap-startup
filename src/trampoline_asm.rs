@@ -1,6 +1,9 @@
 use core::arch::global_asm;
 
-use crate::trampoline::{GDT_DESC_ADDR, TRAMPOLINE_ADDR, TRAMPOLINE_DATA_ADDR, TRAMPOLINE_STACK_ADDR};
+use crate::trampoline::{
+    GDT_DESC_ADDR, STARTUP_CONFIRMATION_ADDR, TRAMPOLINE_ADDR, TRAMPOLINE_DATA_ADDR,
+    TRAMPOLINE_STACK_ADDR,
+};
 
 global_asm!(
     r#"
@@ -72,6 +75,7 @@ ap_trampoline_64:
     mov ss, ax
 
     mov rsp, qword ptr [{trampoline_stack}]
+    mov qword ptr [{startup_confirmation}], 1
     mov rax, qword ptr [{trampoline_data} + 8]
     call rax
     ud2
@@ -82,5 +86,6 @@ ap_trampoline_end:
     gdt_desc = const GDT_DESC_ADDR,
     trampoline_base = const TRAMPOLINE_ADDR,
     trampoline_data = const TRAMPOLINE_DATA_ADDR,
+    startup_confirmation = const STARTUP_CONFIRMATION_ADDR,
     trampoline_stack = const TRAMPOLINE_STACK_ADDR,
 );

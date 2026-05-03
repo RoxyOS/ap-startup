@@ -4,6 +4,8 @@ pub enum Error {
     TrampolineTooHigh,
     TrampolineNotAligned,
     L4TableAddrTooHigh,
+    // Timed out while waiting for ap to start
+    StartupTimeout,
 }
 
 pub type Result<T = ()> = core::result::Result<T, Error>;

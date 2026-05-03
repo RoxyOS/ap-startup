@@ -1,10 +1,14 @@
-use acpi::{Handler, sdt::madt::{Madt, MadtEntry}};
+use acpi::{
+    Handler,
+    sdt::madt::{Madt, MadtEntry},
+};
 use x2apic::lapic::LocalApic;
 
 use crate::{
     Context,
     error::{Error, Result},
     platform::Platform,
+    trampoline::wait_for_ap_startup,
 };
 
 pub(crate) fn wakeup_all_aps_with<P: Platform, H: Handler, F>(
@@ -35,6 +39,7 @@ where
                     local_apic.apic_id as u32,
                     trampoline_addr,
                 );
+                wait_for_ap_startup::<P>()?;
             }
             MadtEntry::LocalX2Apic(local_x2apic)
                 if is_cpu_enabled(local_x2apic.flags)
@@ -42,6 +47,7 @@ where
             {
                 func();
                 send_sequence::<P>(current_local_apic, local_x2apic.x2apic_id, trampoline_addr);
+                wait_for_ap_startup::<P>()?;
             }
             _ => (),
         }

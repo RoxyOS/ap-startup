@@ -14,7 +14,10 @@ pub const GDT_ADDR: u64 = 0x8800;
 pub const GDT_DESC_ADDR: u64 = 0x8840;
 pub const TRAMPOLINE_DATA_ADDR: u64 = 0x8880;
 pub const TRAMPOLINE_STACK_ADDR: u64 = 0x8900;
+// The AP will write to this address once it has started.
+pub const STARTUP_CONFIRMATION_ADDR: u64 = 0x8908;
 pub const TRAMPOLINE_PAGE_SIZE: u64 = 0x1000;
+const STARTUP_CONFIRMATION_RETRIES: usize = 100_000;
 
 #[repr(C)]
 struct TrampolineData {
@@ -39,11 +42,13 @@ const _: () = {
     assert!(GDT_DESC_ADDR >= TRAMPOLINE_ADDR);
     assert!(TRAMPOLINE_DATA_ADDR >= TRAMPOLINE_ADDR);
     assert!(TRAMPOLINE_STACK_ADDR >= TRAMPOLINE_ADDR);
+    assert!(STARTUP_CONFIRMATION_ADDR >= TRAMPOLINE_ADDR);
 
     assert!(GDT_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
     assert!(GDT_DESC_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
     assert!(TRAMPOLINE_DATA_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
     assert!(TRAMPOLINE_STACK_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+    assert!(STARTUP_CONFIRMATION_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
 };
 
 pub(crate) fn setup_trampoline<P: Platform>(entry_point: EntryPoint) -> Result {
@@ -69,11 +74,23 @@ pub(crate) fn setup_trampoline<P: Platform>(entry_point: EntryPoint) -> Result {
     Ok(())
 }
 
-// Allocate a fresh per-AP stack and publish its top into the shared trampoline
-// workspace right before waking the next AP.
-pub(crate) fn update_trampoline_stack<P: Platform>() {
+pub(crate) fn prepare_next_ap<P: Platform>() {
     let stack_top = allocate_stack(P::STACK_SIZE);
     P::write_phys(TRAMPOLINE_STACK_ADDR, stack_top);
+    P::write_phys(STARTUP_CONFIRMATION_ADDR, 0_u64);
+}
+
+pub(crate) fn wait_for_ap_startup<P: Platform>() -> Result {
+    for _ in 0..STARTUP_CONFIRMATION_RETRIES {
+        let confirmation =
+            unsafe { P::phys_to_ptr::<u64>(STARTUP_CONFIRMATION_ADDR).read_volatile() };
+        if confirmation != 0 {
+            return Ok(());
+        }
+        P::sleep_us(1);
+    }
+
+    Err(Error::StartupTimeout)
 }
 
 fn setup_trampoline_data<P: Platform>(data: TrampolineData) {
@@ -113,13 +130,11 @@ fn setup_trampoline_gdt<P: Platform>() {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        TRAMPOLINE_ADDR, TRAMPOLINE_PAGE_SIZE, TRAMPOLINE_STACK_ADDR,
-    };
+    use super::{STARTUP_CONFIRMATION_ADDR, TRAMPOLINE_ADDR, TRAMPOLINE_PAGE_SIZE};
 
     #[test]
     fn trampoline_workspace_fits_in_one_page() {
-        let workspace_end = TRAMPOLINE_STACK_ADDR + size_of::<u64>() as u64;
+        let workspace_end = STARTUP_CONFIRMATION_ADDR + size_of::<u64>() as u64;
         assert!(workspace_end <= TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
     }
 
