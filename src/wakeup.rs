@@ -79,3 +79,34 @@ fn send_sequence<P: Platform>(current_local_apic: &mut LocalApic, apic_id: u32, 
         P::sleep_us(200);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{addr_to_sipi_vector, check_trampoline};
+    use crate::error::Error;
+
+    #[test]
+    fn trampoline_must_be_below_1mib() {
+        assert_eq!(check_trampoline(0x100000), Err(Error::TrampolineTooHigh));
+        assert_eq!(check_trampoline(0x101000), Err(Error::TrampolineTooHigh));
+    }
+
+    #[test]
+    fn trampoline_must_be_4kib_aligned() {
+        assert_eq!(check_trampoline(0x8001), Err(Error::TrampolineNotAligned));
+        assert_eq!(check_trampoline(0x8fff), Err(Error::TrampolineNotAligned));
+    }
+
+    #[test]
+    fn trampoline_accepts_aligned_low_memory_page() {
+        assert_eq!(check_trampoline(0x8000), Ok(()));
+        assert_eq!(check_trampoline(0xf000), Ok(()));
+    }
+
+    #[test]
+    fn sipi_vector_is_physical_page_number() {
+        assert_eq!(addr_to_sipi_vector(0x8000), 0x08);
+        assert_eq!(addr_to_sipi_vector(0xf000), 0x0f);
+        assert_eq!(addr_to_sipi_vector(0x9f000), 0x9f);
+    }
+}

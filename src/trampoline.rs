@@ -99,3 +99,48 @@ fn setup_trampoline_gdt<P: Platform>() {
 
     P::write_phys(GDT_DESC_ADDR, gdt_descriptor);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        GDT_ADDR, GDT_DESC_ADDR, TRAMPOLINE_ADDR, TRAMPOLINE_DATA_ADDR, TRAMPOLINE_PAGE_SIZE,
+        TRAMPOLINE_STACK_ADDR,
+    };
+
+    #[test]
+    fn trampoline_workspace_fits_in_one_page() {
+        let workspace_end = TRAMPOLINE_STACK_ADDR + size_of::<u64>() as u64;
+        assert!(workspace_end <= TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+    }
+
+    #[test]
+    fn trampoline_gdt_descriptor_lives_inside_workspace_page() {
+        assert!(GDT_ADDR >= TRAMPOLINE_ADDR);
+        assert!(GDT_DESC_ADDR >= TRAMPOLINE_ADDR);
+        assert!(TRAMPOLINE_DATA_ADDR >= TRAMPOLINE_ADDR);
+        assert!(TRAMPOLINE_STACK_ADDR >= TRAMPOLINE_ADDR);
+
+        assert!(GDT_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+        assert!(GDT_DESC_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+        assert!(TRAMPOLINE_DATA_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+        assert!(TRAMPOLINE_STACK_ADDR < TRAMPOLINE_ADDR + TRAMPOLINE_PAGE_SIZE);
+    }
+
+    #[test]
+    fn temporary_gdt_selectors_match_trampoline_jumps() {
+        let gdt: [u64; 4] = [
+            0x0000_0000_0000_0000,
+            0x00af_9a00_0000_ffff,
+            0x00cf_9200_0000_ffff,
+            0x00cf_9a00_0000_ffff,
+        ];
+
+        let long_mode_code = gdt[1];
+        let data = gdt[2];
+        let protected_mode_code = gdt[3];
+
+        assert_eq!(long_mode_code, 0x00af_9a00_0000_ffff);
+        assert_eq!(data, 0x00cf_9200_0000_ffff);
+        assert_eq!(protected_mode_code, 0x00cf_9a00_0000_ffff);
+    }
+}
