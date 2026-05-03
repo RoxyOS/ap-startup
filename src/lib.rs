@@ -101,11 +101,11 @@ use crate::{
 extern crate alloc;
 
 pub mod error;
-pub mod misc;
 pub mod platform;
-pub mod trampoline;
-pub mod trampoline_asm;
-pub mod wakeup;
+mod misc;
+mod trampoline;
+mod trampoline_asm;
+mod wakeup;
 
 pub struct Context<'a, H: Handler> {
     pub acpi_tables: &'a AcpiTables<H>,
