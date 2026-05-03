@@ -6,10 +6,11 @@
 //!
 //! ### Implement `Platform`
 //!
-//! The crate needs two platform-specific operations:
+//! The crate needs:
 //!
 //! - a microsecond delay function
 //! - a way to turn a physical address into a writable pointer
+//! - a way to map memory
 //!
 //! ```rust,ignore
 //! struct MyPlatform;
@@ -26,6 +27,12 @@
 //!     fn phys_to_ptr<T>(phys_addr: u64) -> *mut T {
 //!         let _ = phys_addr;
 //!         // TODO: convert a physical address into a writable virtual pointer.
+//!         todo!()
+//!     }
+//!
+//!     fn map_memory(virt_addr: u64, phys_addr: u64, size: u64) {
+//!         let _ = (virt_addr, phys_addr, size);
+//!         // TODO: map `virt_addr..virt_addr + size` to `phys_addr..phys_addr + size`.
 //!         todo!()
 //!     }
 //! }
@@ -48,19 +55,14 @@
 //!
 //! - parsed ACPI tables
 //! - the BSP local APIC
-//! - the top-level page table physical address
 //!
 //! ```rust,ignore
 //! let acpi_tables = todo!(); // your parsed ACPI tables
 //! let local_apic = todo!(); // the BSP local APIC
-//! let current_l4_table = todo!(); // the physical address of the current L4 page table
-//!                                // this page table must map the trampoline workspace
-//!                                // and the `ap_main` entry point after paging is enabled
 //!
 //! let ctx = Context {
 //!     acpi_tables,
 //!     current_local_apic: local_apic,
-//!     current_l4_table,
 //! };
 //! ```
 //!
@@ -85,13 +87,6 @@
 //!
 //! Because this workspace is shared, AP startup is assumed to be serialized.
 //! This crate is not designed for parallel AP bring-up.
-//!
-//! ### L4 table address limit
-//!
-//! The current trampoline only loads the low 32 bits of `CR3` during the 32-bit
-//! startup stage.
-//!
-//! That means the top-level page table physical address must be below `4 GiB`.
 #![no_std]
 use acpi::{AcpiTables, Handler};
 use x2apic::lapic::LocalApic;

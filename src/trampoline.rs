@@ -15,6 +15,7 @@ pub const GDT_ADDR: u64 = 0x8800;
 pub const GDT_DESC_ADDR: u64 = 0x8840;
 pub const TRAMPOLINE_DATA_ADDR: u64 = 0x8880;
 pub const TRAMPOLINE_STACK_ADDR: u64 = 0x8900;
+pub const TRAMPOLINE_PAGE_SIZE: u64 = 0x1000;
 
 #[repr(C)]
 struct TrampolineData {
@@ -49,6 +50,7 @@ pub fn setup_trampoline<P: Platform, H: Handler>(entry_point: EntryPoint) -> Res
         return Err(Error::L4TableAddrTooHigh);
     }
 
+    P::map_memory(TRAMPOLINE_ADDR, TRAMPOLINE_ADDR, TRAMPOLINE_PAGE_SIZE);
     copy_trampoline::<P>();
     setup_trampoline_gdt::<P>();
     setup_trampoline_data::<P>(trampoline_data);
@@ -78,12 +80,12 @@ fn copy_trampoline<P: Platform>() {
 }
 
 fn setup_trampoline_gdt<P: Platform>() {
-    // null, 32-bit code, 32-bit data, 64-bit code
+    // null, 64-bit code, flat data, 32-bit code
     let gdt: [u64; 4] = [
         0x0000_0000_0000_0000,
-        0x00cf_9a00_0000_ffff,
-        0x00cf_9200_0000_ffff,
         0x00af_9a00_0000_ffff,
+        0x00cf_9200_0000_ffff,
+        0x00cf_9a00_0000_ffff,
     ];
 
     unsafe {

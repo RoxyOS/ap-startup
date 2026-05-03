@@ -1,7 +1,10 @@
-use alloc::boxed::Box;
+use alloc::alloc::{Layout, alloc_zeroed};
 
 pub(crate) fn allocate_stack(size: usize) -> u64 {
-    let stack_box = Box::leak(alloc::vec![0u8; size].into_boxed_slice());
+    let layout = Layout::from_size_align(size, 16).expect("invalid AP stack layout");
+    let stack_ptr = unsafe { alloc_zeroed(layout) };
 
-    stack_box.as_ptr() as u64 + size as u64
+    assert!(!stack_ptr.is_null(), "failed to allocate AP stack");
+
+    stack_ptr as u64 + size as u64
 }

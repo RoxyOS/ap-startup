@@ -10,6 +10,7 @@ global_asm!(
     .global ap_trampoline_start
 ap_trampoline_start:
     cli
+    cld
 
     // Reset segment registers
     xor ax, ax
@@ -26,9 +27,9 @@ ap_trampoline_start:
     mov cr0, eax
 
     .set ap_trampoline_32_addr, TRAMPOLINE_BASE + (ap_trampoline_32 - ap_trampoline_start)
-    push 0x08
-    push ap_trampoline_32_addr
-    retf
+    .byte 0xea
+    .word ap_trampoline_32_addr
+    .word 0x0018
 
     .code32
 ap_trampoline_32:
@@ -37,36 +38,31 @@ ap_trampoline_32:
     mov es, ax
     mov ss, ax
 
-    // Load values from the shared trampoline workspace before enabling paging,
-    // so the 64-bit stage does not need to access low memory anymore.
-    mov esp, dword ptr [{trampoline_stack} + 0]
-    mov ebx, dword ptr [{trampoline_stack} + 4]
-    mov esi, dword ptr [{trampoline_data} + 8]
-    mov edi, dword ptr [{trampoline_data} + 12]
-
     // Load page table
     mov eax, dword ptr [{trampoline_data} + 0]
     mov cr3, eax
 
     // Long mode stuff
     mov eax, cr4
-    or eax, 1 << 5
+    or eax, (1 << 10) | (1 << 9) | (1 << 5) | (1 << 4)
     mov cr4, eax
 
     mov ecx, 0xC0000080
+    xor edx, edx
     rdmsr
-    or eax, 1 << 8
+    or eax, (1 << 11) | (1 << 8)
     wrmsr
 
     // Enable paging
     mov eax, cr0
-    or eax, 1 << 31
+    and eax, ~(1 << 2)
+    or eax, (1 << 31) | (1 << 16) | (1 << 1)
     mov cr0, eax
 
     .set ap_trampoline_64_addr, TRAMPOLINE_BASE + (ap_trampoline_64 - ap_trampoline_start)
-    push 0x18
-    push ap_trampoline_64_addr
-    retf
+    .byte 0xea
+    .long ap_trampoline_64_addr
+    .word 0x0008
 
     .code64
 ap_trampoline_64:
@@ -75,18 +71,10 @@ ap_trampoline_64:
     mov es, ax
     mov ss, ax
 
-    // Rebuild the 64-bit stack pointer and entry point from the values cached
-    // in registers during the 32-bit stage.
-    shl rbx, 32
-    mov ebx, ebx
-    mov rsp, rbx
-    mov esp, esp
-
-    shl rdi, 32
-    mov edi, edi
-    mov rax, rdi
-    mov eax, esi
-    jmp rax
+    mov rsp, qword ptr [{trampoline_stack}]
+    mov rax, qword ptr [{trampoline_data} + 8]
+    call rax
+    ud2
 
     .global ap_trampoline_end
 ap_trampoline_end:
