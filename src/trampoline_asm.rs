@@ -37,6 +37,13 @@ ap_trampoline_32:
     mov es, ax
     mov ss, ax
 
+    // Load values from the shared trampoline workspace before enabling paging,
+    // so the 64-bit stage does not need to access low memory anymore.
+    mov esp, dword ptr [{trampoline_stack} + 0]
+    mov ebx, dword ptr [{trampoline_stack} + 4]
+    mov esi, dword ptr [{trampoline_data} + 8]
+    mov edi, dword ptr [{trampoline_data} + 12]
+
     // Load page table
     mov eax, dword ptr [{trampoline_data} + 0]
     mov cr3, eax
@@ -68,10 +75,17 @@ ap_trampoline_64:
     mov es, ax
     mov ss, ax
 
-    // Switch to the AP-specific stack
-    mov rsp, qword ptr [{trampoline_stack}]
-1:
-    mov rax, qword ptr [{trampoline_data} + 8]
+    // Rebuild the 64-bit stack pointer and entry point from the values cached
+    // in registers during the 32-bit stage.
+    shl rbx, 32
+    mov ebx, ebx
+    mov rsp, rbx
+    mov esp, esp
+
+    shl rdi, 32
+    mov edi, edi
+    mov rax, rdi
+    mov eax, esi
     jmp rax
 
     .global ap_trampoline_end
