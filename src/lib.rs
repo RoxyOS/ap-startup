@@ -13,6 +13,8 @@
 //! - a way to map memory
 //!
 //! ```rust,ignore
+//! use ap_startup::platform::Platform;
+//!
 //! struct MyPlatform;
 //!
 //! impl Platform for MyPlatform {
@@ -57,6 +59,8 @@
 //! - the BSP local APIC
 //!
 //! ```rust,ignore
+//! use ap_startup::Context;
+//!
 //! let acpi_tables = todo!(); // your parsed ACPI tables
 //! let local_apic = todo!(); // the BSP local APIC
 //!
@@ -69,6 +73,8 @@
 //! ### Start all APs
 //!
 //! ```rust,ignore
+//! use ap_startup::start_all_aps;
+//!
 //! start_all_aps::<MyPlatform, MyACPIHandler>(ap_main, ctx)
 //!     .expect("failed to wake APs");
 //! ```
