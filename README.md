@@ -24,7 +24,7 @@ impl Platform for MyPlatform {
 
     fn sleep_us(us: u64) {
         let _ = us;
-        // TODO: implement a proper delay backend.
+        // TODO: sleep for `us`
         todo!()
     }
 
