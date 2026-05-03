@@ -18,7 +18,7 @@ dependencies = [
 
 [[package]]
 name = "ap-startup"
-version = "0.2.3"
+version = "0.2.4"
 dependencies = [
  "acpi",
  "x2apic",
