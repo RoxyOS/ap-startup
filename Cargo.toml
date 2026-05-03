@@ -6,7 +6,7 @@ description = "Start x86 application processors and jump to an entry point."
 repository = "https://github.com/RoxyOS/ap-startup"
 license = "MIT"
 readme = "README.md"
-keywords = ["trampoline", "ap", "smp", "x86", "startup"]
+keywords = ["trampoline", "ap", "smp", "osdev", "startup"]
 categories = ["no-std", "hardware-support"]
 
 [dependencies]
